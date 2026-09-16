@@ -1,0 +1,66 @@
+name: Publish the demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One publish at a time. A run already under way is left to finish, so a
+# half-uploaded site is never what ends up live.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the demo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Every version is pinned exactly, so this installs the same tree the
+      # demo was checked against rather than whatever is newest today.
+      - name: Install
+        run: npm ci
+
+      - name: Build the site
+        run: npm run build
+
+      # The check runs a browser against the built `dist/`, not against the
+      # sources, so what is checked is what is published. It also runs the
+      # development server once, because React's StrictMode and its own
+      # warnings only exist there, and that is where this demo's claims about
+      # the component lifecycle are actually testable.
+      - name: Check the built site works in a browser
+        run: npm run verify
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Package the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
