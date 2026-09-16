@@ -19,7 +19,7 @@ Every earthquake USGS has recorded in the last seven days, one row each, updated
 
 **The table.** When it happened in your own time zone and in UTC, the magnitude and how far it has been revised since it first arrived, the scale used, the place, the PAGER alert level, whether a tsunami was flagged, how many people reported feeling it, the depth and coordinates, which network recorded it, and a link to the USGS page. Sort, filter, group, search, and choose your columns.
 
-**Headline figures.** How many earthquakes are in the window, the largest magnitude, how many were M4.5 and above in the last twenty four hours, how long since the latest one, and how long since the feed last answered. They follow the table: narrow it and every figure follows.
+**Headline figures.** How many earthquakes are in the window, the largest magnitude, how many were M4.5 and above in the last twenty four hours, how long since the latest one, and how long since the feed last answered. The strip is a KPI panel bound to the table (`createKPI(host, { grid })`), so it follows the table on its own — a filter, a grouping, an arrival, a removal — and React never handles the rows: narrow the table and every figure follows. The one figure that is not a tile is the named largest earthquake, a phrase rather than a number, drawn from the panel's own rows each time it re-reads the table. A bound panel hands a tile the grid's value for each column, and for a datetime column that is the grid's wall-clock text rather than the feed's number, so the two elapsed-time tiles read it back into an instant first.
 
 **Charts.** How many earthquakes at each magnitude, how many were recorded each day, depth against magnitude, and which network recorded them. All four read the same rows as the table.
 
@@ -101,7 +101,7 @@ Every version is pinned exactly, so `npm ci` installs the tree the demo was chec
 | --- | --- |
 | React | 18.3.1, with JSX and no TypeScript |
 | Build | Vite 7.3.6, `@vitejs/plugin-react` 4.7.0 |
-| Grid | `@toclocoinc/lattice-grid` 1.61.0, plus its React, charts, KPI and data-router modules |
+| Grid | `@toclocoinc/lattice-grid` 1.62.0, plus its React, charts, KPI and data-router modules |
 
 ## Where the data comes from
 

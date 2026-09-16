@@ -231,11 +231,8 @@ export function useQuakeRouter({ initialRows }) {
      reported, which on a quiet feed can be a long time. */
   const prunedRef = useRef(null);
   prunedRef.current = pruneWindow;
-  const [pruneTick, setPruneTick] = useState(0);
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (prunedRef.current() > 0) setPruneTick((n) => n + 1);
-    }, PRUNE_EVERY_MS);
+    const timer = setInterval(() => prunedRef.current(), PRUNE_EVERY_MS);
     return () => clearInterval(timer);
   }, []);
 
@@ -272,6 +269,5 @@ export function useQuakeRouter({ initialRows }) {
     notePoll,
     notePollError,
     publish,
-    pruneTick,
   };
 }

@@ -27,7 +27,6 @@ import {
   quakeTiles,
 } from './grid-config.js';
 import { lifecycle } from './lattice.js';
-import { useMatchedRows } from './hooks/useMatchedRows.js';
 import { useQuakeFeed } from './hooks/useQuakeFeed.js';
 import { useQuakeRouter } from './hooks/useQuakeRouter.js';
 
@@ -48,7 +47,6 @@ export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchM
     attachSignificant,
     notePoll,
     notePollError,
-    pruneTick,
   } = useQuakeRouter({ initialRows: rows });
 
   const [allGrid, setAllGrid] = useState(null);
@@ -72,7 +70,23 @@ export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchM
      never rebuilt. */
   const tiles = useMemo(() => quakeTiles(() => statusRef.current.lastPoll), [statusRef]);
 
-  const inView = useMatchedRows(allGrid, pruneTick);
+  /* How many earthquakes the table currently matches, for the badge on its
+     tab. The panel is bound to the table and follows it, so the number is
+     read off the panel each time it says it has re-read the table, rather
+     than counted here a second time. */
+  const [inWindow, setInWindow] = useState(0);
+  useEffect(() => {
+    if (!kpi) {
+      setInWindow(0);
+      return undefined;
+    }
+    const read = () => {
+      const n = kpi.value('events');
+      setInWindow(typeof n === 'number' ? n : 0);
+    };
+    read();
+    return kpi.on('change', read);
+  }, [kpi]);
 
   /**
    * Take a poll's result: roll the window forward, then apply it.
@@ -113,10 +127,10 @@ export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchM
 
   const tabs = useMemo(
     () => [
-      { ...TABS[0], badge: inView.length },
+      { ...TABS[0], badge: inWindow },
       { ...TABS[1], badge: significantHeld },
     ],
-    [inView.length, significantHeld],
+    [inWindow, significantHeld],
   );
 
   /* A hook for the verification script and for anyone poking at the page. It
@@ -152,7 +166,7 @@ export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchM
   return (
     <>
       <Masthead meta={meta} status={status} replaying={replaying} />
-      <KpiStrip rows={inView} tiles={tiles} onPanel={setKpi} />
+      <KpiStrip grid={allGrid} tiles={tiles} onPanel={setKpi} />
       <Charts grid={allGrid} specs={CHART_SPECS} onCharts={setCharts} />
       <Controls
         grid={allGrid}

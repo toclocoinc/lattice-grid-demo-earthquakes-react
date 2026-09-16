@@ -14,6 +14,23 @@ import { ALERT_LABELS, ALERT_LEVELS, NOTABLE_MAG } from './usgs-feed.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * A row's time as an instant.
+ *
+ * A panel bound to a grid does not hand a tile the grid's rows: it hands it a
+ * projection of each row through the grid's own value pipeline, and the value
+ * of a datetime column there is the grid's wall-clock text rather than the
+ * number the feed carried. It is read back into milliseconds before anything
+ * does arithmetic on it. A raw row, as a plain array panel would hold, is
+ * already a number.
+ *
+ * @param {object} row a row, projected or raw
+ * @returns {number} milliseconds since the epoch, or NaN when there is none
+ */
+export function timeOf(row) {
+  return typeof row.time === 'number' ? row.time : Date.parse(row.time);
+}
+
 /* ------------------------------------------------------------------ */
 /* Columns                                                             */
 /* ------------------------------------------------------------------ */
@@ -404,7 +421,7 @@ export function quakeTiles(lastPollAt) {
         const since = Date.now() - DAY_MS;
         let n = 0;
         for (const row of tileRows) {
-          if (typeof row.mag === 'number' && row.mag >= NOTABLE_MAG && row.time >= since) n += 1;
+          if (typeof row.mag === 'number' && row.mag >= NOTABLE_MAG && timeOf(row) >= since) n += 1;
         }
         return n;
       },
@@ -419,7 +436,10 @@ export function quakeTiles(lastPollAt) {
       thresholds: { warn: 60, critical: 240, direction: 'lowerIsBetter' },
       compute: (tileRows) => {
         let newest = 0;
-        for (const row of tileRows) if (row.time > newest) newest = row.time;
+        for (const row of tileRows) {
+          const at = timeOf(row);
+          if (at > newest) newest = at;
+        }
         if (!newest) return null;
         return Math.max(0, Math.round((Date.now() - newest) / 60000));
       },
