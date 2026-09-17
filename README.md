@@ -101,7 +101,7 @@ Every version is pinned exactly, so `npm ci` installs the tree the demo was chec
 | --- | --- |
 | React | 18.3.1, with JSX and no TypeScript |
 | Build | Vite 7.3.6, `@vitejs/plugin-react` 4.7.0 |
-| Grid | `@toclocoinc/lattice-grid` 1.62.0, plus its React, charts, KPI and data-router modules |
+| Grid | `@toclocoinc/lattice-grid` 1.63.0, plus its React, charts, KPI and data-router modules |
 
 ## Where the data comes from
 
