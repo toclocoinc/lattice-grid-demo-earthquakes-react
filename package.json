@@ -13,7 +13,7 @@
     "verify": "node tools/verify.mjs"
   },
   "dependencies": {
-    "@toclocoinc/lattice-grid": "1.62.0",
+    "@toclocoinc/lattice-grid": "file:../../lattice-1307-react-adapter-v2/public_npm",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },

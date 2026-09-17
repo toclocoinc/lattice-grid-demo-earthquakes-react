@@ -12,13 +12,15 @@
  */
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { createGrid, setLicence, getVersion } from '@toclocoinc/lattice-grid';
-import { createLatticeGrid } from '@toclocoinc/lattice-grid/modules/react';
+import { createChart } from '@toclocoinc/lattice-grid/modules/charts';
+import { createKPI } from '@toclocoinc/lattice-grid/modules/kpi';
+import { createTabs } from '@toclocoinc/lattice-grid/modules/tabs';
+import { createDataRouter } from '@toclocoinc/lattice-grid/modules/data-router';
+import { createLatticeReact } from '@toclocoinc/lattice-grid/modules/react';
 
-export { createChart } from '@toclocoinc/lattice-grid/modules/charts';
-export { createKPI } from '@toclocoinc/lattice-grid/modules/kpi';
-export { createDataRouter } from '@toclocoinc/lattice-grid/modules/data-router';
-export { setLicence, getVersion };
+export { createChart, createKPI, createDataRouter, setLicence, getVersion };
 
 /**
  * A ledger of grid instances: how many have ever been built, how many have
@@ -76,11 +78,40 @@ function countedCreateGrid(element, config) {
 }
 
 /**
- * The grid, as a React component.
+ * Every Lattice binding this page uses, as React components and hooks.
  *
- * Built once, at module scope. Building it inside a component would hand React
- * a new component type on every render, and a new type is a different element:
- * React would unmount the old subtree and mount a fresh one, destroying and
- * rebuilding the grid on every keystroke.
+ * Built once, at module scope. Building them inside a component would hand
+ * React a new component type on every render, and a new type is a different
+ * element: React would unmount the old subtree and mount a fresh one,
+ * destroying and rebuilding the grid on every keystroke.
+ *
+ * ## What changed in 1.63
+ *
+ * This page used to write its own React wrapper for the KPI panel, for the
+ * charts and for the tab strip, because the adapter wrapped `createGrid` and
+ * nothing else — about three hundred lines of `useEffect`, and a hand-written
+ * tablist because the tabs module builds its tabs' grids itself. The adapter
+ * now covers every viewer, so all of that is deleted and this is the whole of
+ * what wiring Lattice into React costs.
+ *
+ * `createGrid` is the counted one above, so the ledger still sees every grid
+ * the adapter builds — which is what the deployment check reads.
  */
-export const LatticeGrid = createLatticeGrid({ React, createGrid: countedCreateGrid });
+const lattice = createLatticeReact({
+  React,
+  ReactDOM,
+  createGrid: countedCreateGrid,
+  createKPI,
+  createChart,
+  createTabs,
+  createDataRouter,
+});
+
+export const {
+  LatticeGrid,
+  LatticeKPI,
+  LatticeChart,
+  LatticeTabs,
+  LatticeGridProvider,
+  useLatticeGrid,
+} = lattice;

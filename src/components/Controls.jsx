@@ -2,10 +2,12 @@
  * The controls above the table.
  *
  * Grouping and ordering act on the grid immediately, so they are handed the
- * instance and call it. The M4.5+ toggle is different: it is React state, and
- * it reaches the grid as a prop on `EarthquakeGrid`, which is the point of the
- * exercise. A control that owns a piece of state and a grid that reads it are
- * the normal way round for React, and the grid is never rebuilt to honour it.
+ * instance and call it. The M4.5+ toggle is different: it is React state, held
+ * here and passed up to `Dashboard`, which turns it into the `<LatticeGrid>`'s
+ * `predicates` prop — a named predicate applied through `grid.filters.where`,
+ * composing with whatever else the reader has filtered. A control that owns a
+ * piece of state and a grid that reads it are the normal way round for React,
+ * and the grid is never rebuilt to honour it.
  */
 
 import { NOTABLE_MAG } from '../usgs-feed.js';

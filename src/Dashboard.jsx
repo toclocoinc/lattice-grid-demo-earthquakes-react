@@ -10,23 +10,38 @@
  * Nothing on this page is ever re-created to reflect a change. The grids are
  * built once, the charts once per grid, the KPI panel once; every change after
  * that is pushed into the thing that already exists.
+ *
+ * Since Lattice 1.63 none of that is written here. The adapter ships a
+ * component for every viewer, so the page's own `EarthquakeGrid` wrapper and
+ * the two mount effects inside `KpiStrip` and `Charts` are gone: a grid
+ * publishes itself into `<LatticeGridProvider>` under a name, the panel and the
+ * charts take it from there, and the M4.5+ narrowing is a `predicates` prop.
+ *
+ * The tab strip stays this page's own. The shipped module's tab descriptors are
+ * read once, at mount, so a live badge count would freeze at whatever it was
+ * when the strip was built — see the finding filed against BACKLOG-0001307.
+ * `createLatticeTabs` renders React content into the module's panels correctly;
+ * it is the badge that is not yet live, and the badge is the reason this page
+ * has a tab strip at all.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Charts } from './components/Charts.jsx';
 import { Controls } from './components/Controls.jsx';
-import { EarthquakeGrid } from './components/EarthquakeGrid.jsx';
 import { Footer } from './components/Footer.jsx';
 import { KpiStrip } from './components/KpiStrip.jsx';
 import { Masthead } from './components/Masthead.jsx';
-import { Tabs } from './components/Tabs.jsx';
 import {
   ALL_GRID_PROPS,
   CHART_SPECS,
   SIGNIFICANT_GRID_PROPS,
   quakeTiles,
 } from './grid-config.js';
-import { lifecycle } from './lattice.js';
+import { Tabs } from './components/Tabs.jsx';
+import {
+  lifecycle, LatticeGrid, LatticeGridProvider,
+} from './lattice.js';
+import { NOTABLE_MAG } from './usgs-feed.js';
 import { useQuakeFeed } from './hooks/useQuakeFeed.js';
 import { useQuakeRouter } from './hooks/useQuakeRouter.js';
 
@@ -34,6 +49,20 @@ const TABS = [
   { id: 'all', label: 'All earthquakes' },
   { id: 'significant', label: 'Significant' },
 ];
+
+/**
+ * The M4.5+ narrowing, as a named row predicate.
+ *
+ * Hoisted, so registering it twice registers the same one. It reaches the table
+ * through the adapter's `predicates` prop, which maps to
+ * `grid.filters.where(name, fn)` — a *named* predicate that composes with
+ * whatever filter the reader has set in the tool panel. The `filters` prop
+ * could not do this: it maps to `filters.set`, which replaces the whole
+ * condition tree and would silently throw the reader's own filter away.
+ */
+const isNotable = (row) => typeof row.mag === 'number' && row.mag >= NOTABLE_MAG;
+const NOTABLE_ON = Object.freeze({ notable: isNotable });
+const NOTABLE_OFF = Object.freeze({});
 
 export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchMs }) {
   const {
@@ -125,6 +154,15 @@ export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchM
   let significantHeld = 0;
   for (const row of store.values()) if (row.significant) significantHeld += 1;
 
+  /*
+   * The shipped tab strip, with React elements as its content.
+   *
+   * The module owns the tablist, the keyboard handling, the lazy first mount
+   * and the keep-once-opened rule; React owns what is inside each panel, so
+   * each table is a real `<LatticeGrid>` with props, a name and the page's
+   * context around it. A tab's content is not built until its tab is first
+   * opened, which is also what makes the grid measure itself while on screen.
+   */
   const tabs = useMemo(
     () => [
       { ...TABS[0], badge: inWindow },
@@ -164,10 +202,10 @@ export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchM
   ]);
 
   return (
-    <>
+    <LatticeGridProvider>
       <Masthead meta={meta} status={status} replaying={replaying} />
-      <KpiStrip grid={allGrid} tiles={tiles} onPanel={setKpi} />
-      <Charts grid={allGrid} specs={CHART_SPECS} onCharts={setCharts} />
+      <KpiStrip tiles={tiles} onPanel={setKpi} />
+      <Charts specs={CHART_SPECS} onCharts={setCharts} />
       <Controls
         grid={allGrid}
         notable={notable}
@@ -177,11 +215,13 @@ export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchM
       <Tabs tabs={tabs} active={active} onChange={setActive} ariaLabel="Earthquake views">
         {(id) =>
           id === 'all' ? (
-            <EarthquakeGrid
-              config={ALL_GRID_PROPS}
-              onGrid={setAllGrid}
-              notable={notable}
+            <LatticeGrid
+              name="all"
               className="grid-host"
+              {...ALL_GRID_PROPS}
+              predicates={notable ? NOTABLE_ON : NOTABLE_OFF}
+              onGridReady={setAllGrid}
+              onGridDestroy={() => setAllGrid(null)}
             />
           ) : (
             /*
@@ -190,15 +230,17 @@ export function Dashboard({ rows, replayRows, meta, significantIds, mode, fetchM
              * window has already dropped; narrowing the All table could never
              * show them. It therefore has no rolling window of its own.
              */
-            <EarthquakeGrid
-              config={SIGNIFICANT_GRID_PROPS}
-              onGrid={setSignificantGrid}
+            <LatticeGrid
+              name="significant"
               className="grid-host"
+              {...SIGNIFICANT_GRID_PROPS}
+              onGridReady={setSignificantGrid}
+              onGridDestroy={() => setSignificantGrid(null)}
             />
           )
         }
       </Tabs>
       <Footer />
-    </>
+    </LatticeGridProvider>
   );
 }

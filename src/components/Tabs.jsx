@@ -1,13 +1,22 @@
 /**
  * The tab strip.
  *
- * The package ships a tabs module, and it is not used here. It cannot be: it
- * takes `createGrid` and builds every tab's grid itself, which is the opposite
- * of what a React application wants. React has to own the tree, or the grid
- * inside a tab is not a React component and cannot take props, hold a ref, or
- * be composed with anything else on the page. So the strip is written here —
- * a `role="tablist"` of buttons over a stack of `role="tabpanel"` regions —
- * and the grids inside it are ordinary children.
+ * The package's adapter now ships `<LatticeTabs>`, which does let a tab's
+ * content be a real React element — `Dashboard` no longer needs to build a
+ * grid outside the module to keep one as a component. It is still not used
+ * here, for a narrower reason than "it cannot be": the module's tab
+ * descriptors (`label`, `badge`, …) are read once, when the strip is built,
+ * and there is no method to repaint one afterwards. This page's tab badges are
+ * live counts read off React state every render, so `<LatticeTabs>` would show
+ * the count from the moment each tab was first opened and never again —
+ * silently, until BACKLOG-0001307 taught the adapter to say so once instead
+ * (see `LatticeTabs: \`tabs\` changed…` in `packages/modules/react/index.js`).
+ * Filed as a finding against that card rather than reworked here: the fix
+ * belongs in the tabs module (a way to update a badge post-construction), not
+ * in this page or in the React adapter, which is already honest about the
+ * limit it inherits. So the strip is written here — a `role="tablist"` of
+ * buttons over a stack of `role="tabpanel"` regions — and the grids inside it
+ * are ordinary children, free to take a live badge as an ordinary prop.
  *
  * Two rules the strip keeps, both of which the shipped module also keeps and
  * both of which matter more than they look:
