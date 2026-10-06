@@ -399,7 +399,7 @@ try {
       destroyed: l.destroyed,
       live: l.live.size,
       reconfigured: l.reconfigured,
-      latticeRoots: document.querySelectorAll('.lattice').length,
+      latticeRoots: document.querySelectorAll('.lat-grid-root').length,
       gridHosts: document.querySelectorAll('.grid-host').length,
       routers: d.router ? 1 : 0,
       /* Five tiles are configured. A second panel left behind by the double
@@ -458,7 +458,7 @@ try {
         events: after.kpi.value('events'),
         where: after.allGrid.filters.where(),
         sameInstance: after.allGrid === window.__gridBefore,
-        latticeRoots: document.querySelectorAll('.lattice').length,
+        latticeRoots: document.querySelectorAll('.lat-grid-root').length,
         minMag,
         pressed: document.querySelector('.action.toggle').getAttribute('aria-pressed'),
         marks: after.charts.map((c) => (c.element ? c.element.querySelectorAll('rect, circle').length : 0)),
@@ -506,14 +506,14 @@ try {
 
   const tabbed = await evaluate(`(async () => {
     const d = window.__quakeDemo;
-    const before = { created: d.lifecycle.created, significant: !!d.significantGrid, roots: document.querySelectorAll('.lattice').length };
+    const before = { created: d.lifecycle.created, significant: !!d.significantGrid, roots: document.querySelectorAll('.lat-grid-root').length };
     d.setActiveTab('significant');
     await new Promise((r) => setTimeout(r, 1200));
     const mid = window.__quakeDemo;
     const opened = {
       created: mid.lifecycle.created,
       rows: mid.significantGrid ? mid.significantGrid.rows.count() : 0,
-      roots: document.querySelectorAll('.lattice').length,
+      roots: document.querySelectorAll('.lat-grid-root').length,
       allSignificant: (() => {
         let all = true;
         mid.significantGrid.rows.forEach((r) => { if (r && r.data && r.data.significant !== true) all = false; });
@@ -572,7 +572,7 @@ try {
         live: window.__quakeDemoApp.lifecycle.live.size,
       },
       appChildren: document.querySelector('#app').childElementCount,
-      latticeRoots: document.querySelectorAll('.lattice').length,
+      latticeRoots: document.querySelectorAll('.lat-grid-root').length,
       chartSvgs: document.querySelectorAll('.chart-mount > *').length,
     };
   })()`;
@@ -601,7 +601,7 @@ try {
   await waitFor('window.__quakeDemo.allGrid && window.__quakeDemo.allGrid.rows.count() > 0', 60000, 'the remounted rows');
   const remounted = await evaluate(`(() => {
     const d = window.__quakeDemo;
-    return { rows: d.allGrid.rows.count(), live: d.lifecycle.live.size, roots: document.querySelectorAll('.lattice').length, charts: d.charts.length };
+    return { rows: d.allGrid.rows.count(), live: d.lifecycle.live.size, roots: document.querySelectorAll('.lat-grid-root').length, charts: d.charts.length };
   })()`);
   console.log(`  remounted: ${remounted.rows} rows, ${remounted.live} grid alive, ${remounted.charts} charts`);
   check(remounted.rows > 0, 'the application comes back after a remount', `${remounted.rows} rows`);
