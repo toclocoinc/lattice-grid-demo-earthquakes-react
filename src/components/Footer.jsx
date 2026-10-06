@@ -14,6 +14,10 @@ export function Footer() {
           'zone alongside UTC, which is what USGS publishes. Early readings are automatic and are ' +
           'revised by a reviewer, so a magnitude here may change.'}
       </p>
+      <p>
+        {'Built with '}
+        <a href="https://www.latticegrid.dev/react-data-grid/">Lattice Grid</a>
+      </p>
     </footer>
   );
 }
