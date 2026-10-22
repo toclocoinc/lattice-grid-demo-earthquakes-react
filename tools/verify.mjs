@@ -322,6 +322,8 @@ try {
     await call('Page.navigate', { url });
     await waitFor('!!(window.__quakeDemo && window.__quakeDemo.ready)', 120000, `${label} to load`);
     await waitFor('window.__quakeDemo.allGrid && window.__quakeDemo.allGrid.rows.count() > 0', 60000, `${label} rows`);
+    /* `ready` is set before the charts and the KPI panel have been built. */
+    await waitFor('window.__quakeDemo.charts.length === 4 && window.__quakeDemo.kpi && window.__quakeDemo.kpi.value(\'events\') != null', 60000, `${label} charts and tiles`);
   };
 
   /** Save a screenshot, when a directory was asked for. */
